@@ -1,5 +1,4 @@
-import lists_ops
-import pytest
+import first_simple_pytests.src.lists_ops as lists_ops
 
 # adds numbers in range of the given number to the list
 def test_lists_append():
@@ -12,6 +11,6 @@ def test_lists_length():
     assert length_result == 1
 
 # reverses the given list
-def test_lists_reverse(l):
+def test_lists_reverse():
     reverse_result = lists_ops.lists_reverse([0, 1, 2])
     assert reverse_result == [2, 1, 0]

@@ -1,5 +1,4 @@
-import strings_ops
-import pytest
+import first_simple_pytests.src.strings_ops as strings_ops
 
 # 2 strings' concatenation
 def test_strings_concat():

@@ -2,7 +2,7 @@ def strings_concat(a, b):
     return a + b
 
 def strings_common_symbols(a, b):
-    if x in a:
+    for x in a:
         if x in b:
             return(x)
 

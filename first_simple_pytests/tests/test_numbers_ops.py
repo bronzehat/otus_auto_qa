@@ -1,5 +1,4 @@
-import numbers_ops
-import pytest
+import first_simple_pytests.src.numbers_ops as numbers_ops
 
 # check if the number's type is int
 def test_numbers_isint():
