@@ -1,5 +1,7 @@
 def numbers_isint(x):
-    if type(x) == int: return True
+    if type(x) == int:
+        return True
+    else: return False
 
 def numbers_max(x, y):
     if x > y :
