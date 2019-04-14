@@ -52,6 +52,7 @@ def chosen_browser(request):
     else:
         print "No browser chosen! Choose chrome, firefox or ie"
         pytest.xfail("No browser chosen")
+    driver.fullscreen_window()
     request.addfinalizer(driver.quit)
     return driver
 
