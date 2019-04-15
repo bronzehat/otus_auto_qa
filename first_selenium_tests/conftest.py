@@ -3,13 +3,15 @@ This is the conftest for first_selenium_tests
 Here are commandline options and fixtures
 """
 
+ETALON_URL = "http://localhost/opencart/"
+
 import pytest
 from selenium import webdriver
 from selenium.webdriver import ChromeOptions, FirefoxOptions, IeOptions
 
 @pytest.fixture
 def etalon_url():
-    return "http://localhost/opencart/"
+    return ETALON_URL
 
 def pytest_addoption(parser):
     """
@@ -22,7 +24,7 @@ def pytest_addoption(parser):
         help="choose one of browsers (chrome, firefox or ie)"
         )
     parser.addoption(
-        "--url", action="store", dest="url", type=str, default="http://localhost/opencart",
+        "--url", action="store", dest="url", type=str, default=ETALON_URL,
         help="print url for testing"
     )
 
