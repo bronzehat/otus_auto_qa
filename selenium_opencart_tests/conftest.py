@@ -8,6 +8,25 @@ from selenium import webdriver
 from selenium.webdriver import ChromeOptions, FirefoxOptions, IeOptions
 from selenium_opencart_tests.models.page_objects.page_objects import ProductsPage, LoginPage
 
+# Login Page test data
+ADMIN_USERNAME = "root"
+ADMIN_PASSWORD = "o9p0[-]="
+BASE_URL = "http://localhost"
+ADMIN_DASHBOARD_PATH = "/opencart/admin/"
+WRONG_EMAIL = "12345"
+FORGOTTEN_PAGE = "index.php?route=common/forgotten"
+PAGE_URL_KEY = "dashboard"
+VENDOR_URL = "https://www.opencart.com/"
+CREDENTIALS_ERROR = "No match for Username and/or Password."
+EMAIL_ERROR = "Warning: The E-Mail Address was not found in our " \
+              "records, please try again!"
+
+# Products Page test data
+TEST_PRODUCT_NAME = "TestProduct"
+TEST_PRODUCT_TAG = "TestMetaTagTitle"
+TEST_PRODUCT_MODEL = "TestModel"
+MINIMAL_QUANTITY = "5"
+PRODUCTS_SUCCESS = "Success: You have modified products!"
 
 def pytest_addoption(parser):
     """
@@ -20,7 +39,7 @@ def pytest_addoption(parser):
         help="choose one of browsers (chrome, firefox or ie)"
         )
     parser.addoption(
-        "--url", action="store", dest="url", type=str, default="http://localhost",
+        "--url", action="store", dest="url", type=str, default=BASE_URL,
         help="print url for testing"
     )
 
@@ -71,9 +90,121 @@ def login(login_page):
     :param login_page:
     :return:
     """
-    login_page.set_username("root")
-    login_page.set_password("o9p0[-]=")
+    login_page.set_username(ADMIN_USERNAME)
+    login_page.set_password(ADMIN_PASSWORD)
     login_page.login()
+
+
+@pytest.fixture
+def vendor_url():
+    """
+    Returns URL of developer of the site
+    (is set manually higher)
+    :return: URL string
+    """
+    return VENDOR_URL
+
+@pytest.fixture
+def admin_username():
+    """
+    Returns admin username for the site
+    (is set manually higher)
+    :return: username string
+    """
+    return ADMIN_USERNAME
+
+@pytest.fixture
+def admin_password():
+    """
+    Returns admin password for the site
+    (is set manually higher)
+    :return: password string
+    """
+    return ADMIN_PASSWORD
+
+@pytest.fixture
+def wrong_email():
+    """
+    Returns wrong email for Login Page fail test
+    :return: wrong email string (is set higher)
+    """
+    return WRONG_EMAIL
+
+@pytest.fixture
+def page_url_key():
+    """
+    Returns text that url must contain
+    :return: string that url must contain
+    """
+    return PAGE_URL_KEY
+
+@pytest.fixture
+def credentials_error():
+    """
+    Returns wrong credentials error alert text
+    :return: wrong credentials error alert string
+    """
+    return CREDENTIALS_ERROR
+
+@pytest.fixture
+def email_error():
+    """
+    Returns a wrong email error alert text
+    :return: wrong email error alert string
+    """
+    return EMAIL_ERROR
+
+@pytest.fixture
+def forgotten_page():
+    """
+    Returns substring that must be in
+    forgotten password page's URL
+    """
+    return FORGOTTEN_PAGE
+
+@pytest.fixture
+def products_success():
+    """
+    Returns a product modify suceess alert text
+    :return: success modify alert string
+    """
+    return PRODUCTS_SUCCESS
+
+@pytest.fixture
+def product_name():
+    """
+    Returns a string for product name (for
+    adding and search)
+    :return: string for product name
+    """
+    return TEST_PRODUCT_NAME
+
+@pytest.fixture
+def product_tag():
+    """
+    Returns a string for product tag
+    (for adding)
+    :return: string for product tag
+    """
+    return TEST_PRODUCT_TAG
+
+@pytest.fixture
+def product_model():
+    """
+    Returns a string for product model
+    (for adding)
+    :return: string for product model
+    """
+    return TEST_PRODUCT_MODEL
+
+@pytest.fixture
+def min_quantity():
+    """
+    Returns minimal quantity for
+    product edit test
+    :return:
+    """
+    return MINIMAL_QUANTITY
 
 @pytest.fixture(scope="module")
 def open_login_page(chosen_browser, request):
@@ -83,8 +214,8 @@ def open_login_page(chosen_browser, request):
     :param request:
     :return:
     """
-    url = '/opencart/admin/'
-    return chosen_browser.get("".join([request.config.getoption("--url"), url]))
+    return chosen_browser.get("".join([request.config.getoption("--url"),
+                                       ADMIN_DASHBOARD_PATH]))
 
 @pytest.fixture(scope="module")
 def products_page(chosen_browser):
