@@ -7,6 +7,9 @@ import pytest
 from selenium import webdriver
 from selenium.webdriver import ChromeOptions, FirefoxOptions, IeOptions
 
+@pytest.fixture
+def etalon_url():
+    return "http://localhost/opencart/"
 
 def pytest_addoption(parser):
     """
