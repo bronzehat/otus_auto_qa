@@ -3,15 +3,12 @@ This is the conftest for first_selenium_tests
 Here are commandline options and fixtures
 """
 
-ETALON_URL = "http://localhost/opencart/"
+ETALON_URL = "http://localhost"
+URL_PATH = "/opencart/"
 
 import pytest
 from selenium import webdriver
 from selenium.webdriver import ChromeOptions, FirefoxOptions, IeOptions
-
-@pytest.fixture
-def etalon_url():
-    return ETALON_URL
 
 def pytest_addoption(parser):
     """
@@ -45,7 +42,7 @@ def chosen_browser(request):
     elif parameter == "firefox":
         options = FirefoxOptions()
         options.add_argument("--start-fullscreen")
-        options.add_argument("--headless")
+        # options.add_argument("--headless")
         driver = webdriver.Firefox(firefox_options=options)
     elif parameter == "ie":
         options = IeOptions()
@@ -70,3 +67,7 @@ def base_url(request):
     """
     parameter = request.config.getoption("--url")
     return parameter
+
+@pytest.fixture
+def url_path():
+    return URL_PATH
