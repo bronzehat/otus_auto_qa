@@ -143,3 +143,7 @@ class BasePage:
         :return:
         """
         return self.driver.find_element_by_class_name("alert-success").text
+
+    def screen(self, screenshot_name):
+        path_to_screenshot = "".join([os.getcwd(), "/screenshots", screenshot_name])
+        self.driver.get_screenshot_as_file(path_to_screenshot)

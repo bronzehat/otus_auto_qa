@@ -62,11 +62,14 @@ class LoginPage(BasePage):
         """Clicks Log Out button"""
         self.driver.find_element(*LoginPageLocators.LOGOUT).click()
         logger.info("Logout")
+        time.sleep(2)
+        self.screen("/logout.png")
 
     def goto_opencart_site(self):
         """clicks the link of OpenCart off site"""
         self.driver.find_element(*LoginPageLocators.OFF_SITE).click()
         logger.info("Off site is opened")
+        self.screen("/off_site.png")
 
 
 class ProductsPage(BasePage):
@@ -120,6 +123,7 @@ class ProductsPage(BasePage):
         self.driver.find_element(*ProductsPageLocators.GOTO_IMAGE).click()
         for i in images_list:
             self.add_image(i)
+            self.screen("/add_images.png")
         try:
             WebDriverWait(self.driver, timeout=10).until\
                 (EC.presence_of_element_located((ProductsPageLocators.SAVE))).click()
@@ -171,6 +175,7 @@ class ProductsPage(BasePage):
         minimum.send_keys(min_quantity)
         logger.info("New value of minimal quantity: {}".format(min_quantity))
         self.driver.find_element(*ProductsPageLocators.SAVE).click()
+        self.screen("/edit_finish.png")
         logger.info("***Finished editing product***")
 
     def delete_product(self):
