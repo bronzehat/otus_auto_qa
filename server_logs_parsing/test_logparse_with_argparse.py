@@ -1,42 +1,71 @@
-import pytest
+"""
+This module is for testing with argparse.
+"""
+import argparse
+from os import getcwd
+from os import listdir
+from os.path import isfile, join, getsize
+import platform
 import re
 from collections import Counter
 import json
 from os import path
 
+ip_regexp = r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"   # regexp for searching ip in logfile
+client_error_regexp = r'" 4\d{2} '  # 4xx number
+server_error_regexp = r'" 5\d{2} '  # 5xx number
+request_time_regexp = r'] \d+ "'    # any number between ] and " (configured apache's /D (request time by
+                                    # microseconds logging parameter to be between these symbols)
+timestamp_regexp = r'\d{2}/\D+/\d{4}:\d{2}:\d{2}:\d{2}'
 
-def test_parsing_webserver_logs(file, host_ip):
-    """
-    Parses logfile (or logfiles, if directory is set by cmd option '--dir'
-    and then writes into json file data about TOP IPs, total requests count, GET/POST requests count: get_count,
-    TOP client errors, TOP server errors, TOP longest requests (TOP is given in a top_count variable)
-    :param file:
-    :param host_ip:
-    :return:
-    """
+values = {}
+top_count = "10"
 
-    ip_regexp = r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"   # regexp for searching ip in logfile
-    client_error_regexp = r'" 4\d{2} '  # 4xx number
-    server_error_regexp = r'" 5\d{2} '  # 5xx number
-    request_time_regexp = r'] \d+ "'    # any number between ] and " (configured apache's /D (request time by
-                                        # microseconds logging parameter to be between these symbols)
-    timestamp_regexp = r'\d{2}/\D+/\d{4}:\d{2}:\d{2}:\d{2}'
+if "Windows" in platform.platform():
+    system = "windows"
+    slash = "\\"
+else:
+    system = "linux"
+    slash = "/"
 
-    values = {}
-    top_count = "10"
+current_dir = getcwd()
 
-    def file_last_timestamp(file):
-        with open(file) as f:
-            last_line = list(f)[-1]
-        print(last_line)
-        timestamp = re.search(timestamp_regexp, last_line)
-        if timestamp:
-            return str(timestamp[0]).replace('/', '.').replace(':', '.')
+PARSER = argparse.ArgumentParser()
+PARSER.add_argument("--dir", action="store", dest="directory", type=str, default=None,
+                    help="choose a directory for logs to parse")
+PARSER.add_argument("--file", action="store", dest="file", type=str, default=None,
+                    help="choose a logfile to parse")
+ARGS = PARSER.parse_args()
+defined_dir = ARGS.directory
+defined_file = ARGS.file
+
+
+class LogParser:
+
+    def file(self):
+        if defined_file and not defined_dir:
+            path_to_file = "".join([current_dir, slash, defined_file])
+            if getsize(path_to_file) > 0:
+                return path_to_file
+            else:
+                raise Exception("Defined file is empty ({})".format(path))
+        elif defined_file and defined_dir:
+            path_to_file = "".join([defined_dir, slash, defined_file])
+            if getsize(path_to_file) > 0:
+                return path_to_file
+            else:
+                raise Exception("Defined file is empty ({})".format(path))
+        elif not defined_file and defined_dir:
+            if not listdir(defined_dir):
+                raise Exception("There are no files in given --dir ({})".format(defined_dir))
+            else:
+                defined_dir_files = ["".join([defined_dir, slash, f]) for f
+                                     in listdir(defined_dir) if isfile(join(defined_dir, f))]
+            return defined_dir_files
         else:
-            return path.basename(file)
+            raise Exception("Define at least one of --dir or --file options! Pay attention on README.txt, please")
 
-
-    def copy_unique_elements(list_of_all):
+    def copy_unique_elements(self, list_of_all):
         """
         Copies unique elements from list to unique_list
         :param list_of_all:
@@ -50,7 +79,7 @@ def test_parsing_webserver_logs(file, host_ip):
                 break
         return unique_list
 
-    def findall_unique_exps(regexp, data):
+    def findall_unique_exps(self, regexp, data):
         """
         Returns list of unique expressions in data (may be limited by length
         if copy_unique_elements function's used)
@@ -61,9 +90,9 @@ def test_parsing_webserver_logs(file, host_ip):
         list_of_all = re.findall(regexp, data)
         count = Counter(list_of_all)
         sorted_list = sorted(list_of_all, key=lambda x: (count[x], x), reverse=True)
-        return copy_unique_elements(sorted_list)
+        return self.copy_unique_elements(sorted_list)
 
-    def findall_unique_exps_lines(regexp, logfile):
+    def findall_unique_exps_lines(self, regexp, logfile):
         """
         Returns a list of lines with unique expressions in logfile (may be limited by length
         if copy_unique_elements function's used)
@@ -77,9 +106,9 @@ def test_parsing_webserver_logs(file, host_ip):
                 exp = re.compile(regexp)
                 if exp.search(line):
                     list_of_all.append(line)
-        return copy_unique_elements(list_of_all)
+        return self.copy_unique_elements(list_of_all)
 
-    def requests_count(regexp, data):
+    def requests_count(self, regexp, data):
         """
         Returns requests count containing expression like 'GET' or 'POST'
         :param regexp:
@@ -89,7 +118,7 @@ def test_parsing_webserver_logs(file, host_ip):
         requests_list = re.findall(regexp, data)
         return int(list(Counter(requests_list).values())[0])
 
-    def requests_exec_time_list(regexp, data, logfile):
+    def requests_exec_time_list(self, regexp, data, logfile):
         """
         Returns lines with longest requests (number of lines is set in top_count variable)
         :param regexp:
@@ -119,30 +148,28 @@ def test_parsing_webserver_logs(file, host_ip):
                         top_request_lines.append(line)
         return top_request_lines
 
-    def parse(log):
-
-        timestamp = file_last_timestamp(log)
-        json_file_name = 'log_parse_{}.json'.format(timestamp)
+    def parse(self, log):
+        json_file_name = 'log_parse.json'
         open(json_file_name, 'w').close()  # clears json-file for every test run
 
-        print('\n{}'.format(log))  # to see what log was parsed
-
-        unique_client_error_lines_list = findall_unique_exps_lines(client_error_regexp, log)
-        unique_server_error_lines_list = findall_unique_exps_lines(server_error_regexp, log)
+        print('\nParsed log is {}'.format(log))  # to see what log was parsed
+        #
+        unique_client_error_lines_list = self.findall_unique_exps_lines(client_error_regexp, log)
+        unique_server_error_lines_list = self.findall_unique_exps_lines(server_error_regexp, log)
 
         with open(log) as f:
             data = f.read()
 
-        unique_ips_list = findall_unique_exps(ip_regexp, data)
+        unique_ips_list = self.findall_unique_exps(ip_regexp, data)
 
-        get_count = requests_count('GET', data)
-        post_count = requests_count('POST', data)
+        get_count = self.requests_count('GET', data)
+        post_count = self.requests_count('POST', data)
 
         total_requests_count = get_count + post_count
 
-        top_request_lines = requests_exec_time_list(request_time_regexp, data, log)
+        top_request_lines = self.requests_exec_time_list(request_time_regexp, data, log)
 
-        with open(json_file_name, 'a') as json_file:
+        with open(json_file_name, 'w') as json_file:
             values["{}".format(log)] = {'TOP {} IPs'.format(top_count): unique_ips_list,
                                         'Total requests count':  total_requests_count,
                                         'GET requests count': get_count,
@@ -152,15 +179,18 @@ def test_parsing_webserver_logs(file, host_ip):
                                         'TOP {} longest requests'.format(top_count):  top_request_lines}
             json.dump(values, json_file)
 
-    if isinstance(file, list):
-        for i in file:
-            try:
-                parse(i)
-            except UnicodeDecodeError:
-                print("File wasn't parsed (check format) ({})".format(file))
-                pass
-    else:
+logparser = LogParser()
+logfile = logparser.file()
+
+if isinstance(logfile, list):
+    for i in logfile:
         try:
-            parse(file)
+            logparser.parse(i)
         except UnicodeDecodeError:
-            print("File wasn't parsed (check format) ({})".format(file))
+            print("File wasn't parsed (check format) ({})".format(i))
+            pass
+else:
+    try:
+        logparser.parse(logfile)
+    except UnicodeDecodeError:
+        print("File wasn't parsed (check format) ({})".format(logfile))
